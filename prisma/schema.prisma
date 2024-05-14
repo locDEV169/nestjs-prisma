@@ -1,0 +1,134 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id Int @default(autoincrement())@id
+  username String  @db.VarChar(255) @map("user_name") @unique
+  password String  @db.VarChar(255)
+  firstName String @db.VarChar(255) @map("first_name")
+  lastName  String  @db.VarChar(255) @map("last_name")
+  address String?
+  email String @unique
+
+  @@map("users")
+}
+
+model Category {
+  id Int @default(autoincrement())@id
+  name String @db.VarChar(255)
+  image String
+  description String
+  referenceLink String? @map("reference_link")
+
+  subCategories subCategory[]
+  products Product[]
+
+  @@map("categories")
+}
+
+model subCategory {
+  id Int @default(autoincrement())@id
+  name String @db.VarChar(255)
+  category Category? @relation(fields: [categoryId], references:[id])
+  categoryId Int?  @map("category_id")
+
+  products Product[]
+
+  @@map("sub_categories")
+}
+
+model Product {
+  id Int @default(autoincrement())@id
+  name String @db.VarChar(255)
+  image String
+  description String
+  note String?
+  feature String?
+  referenceLink String? @map("reference_link")
+
+  subCategory subCategory? @relation(fields: [subCategoryId], references:[id])
+  category Category? @relation(fields: [categoryId], references:[id])
+  categoryId Int?  @map("category_id")
+  subCategoryId Int?  @map("sub_category_Id")
+
+  catalogs Catalog[]
+  attributes AttributeOnProducts[]
+
+  @@map("products")
+}
+
+model Attribute {
+  id Int @default(autoincrement())@id
+  name String @unique
+  type String
+  value String?
+  unit  String?
+
+  products AttributeOnProducts[]
+  values Value[]
+
+  @@map("attributes")
+
+}
+
+
+model Value {
+  id Int @default(autoincrement())@id
+  name String?
+  number Float?
+
+  attribute Attribute? @relation(fields: [attributeId], references:[id])
+  attributeId Int?  @map("attribute_id")
+  catalog Catalog? @relation(fields: [catalogId], references:[id])
+  catalogId Int?  @map("catalog_id")
+
+  @@map("values")
+}
+
+model AttributeOnProducts {
+  products Product @relation(fields: [productId], references:[id])
+  productId Int @map("product_id")
+  attribute Attribute @relation(fields: [attributeId], references:[id])
+  attributeId Int @map("attribute_id")
+  assignedAt DateTime @default(now())
+
+  @@id([productId, attributeId])
+
+  @@map("attribute_on_products")
+}
+
+model Catalog {
+  id Int @default(autoincrement())@id
+  name String @db.VarChar(255)
+  image String
+  catalog Float? @unique
+  description String
+  estimatedShippingWeight Float  @map("estimated_shipping_weight")
+  estimatedShippingWeightMetric Float @map("estimated_shipping_weight_metric")
+  dimensions String
+  dimensionsMetric String @map("dimensions_metric")
+  electrical String?
+  price Float?
+  feature String?
+  width Float?
+  depth Float?
+  height Float?
+  widthMetric Float? @map("width_metric")
+  depthMetric Float? @map("depth_metric")
+  heightMetric Float? @map("height_metric")
+  products Product? @relation(fields: [productId], references:[id])
+  productId Int @map("product_id")
+
+  value Value[]
+  
+  @@map("catalogs")
+}
